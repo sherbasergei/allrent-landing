@@ -1,20 +1,23 @@
 /**
  * AllRent Landing Page — "Velvet Evening" Design
  * 
- * Design: Art Deco Revival + Contemporary Luxury
- * Colors: Deep navy (#0D1B2A), champagne gold (#D4AF37), dusty rose, ivory
+ * HERO: Non-standard split layout with masked image reveal,
+ * provocative headline, floating stats, and magnetic CTA.
+ * 
+ * Colors: Deep navy, champagne gold, dusty rose, ivory
  * Fonts: Playfair Display (headings), Raleway (body), Montserrat (CTAs)
  */
 
-import { useEffect, useRef, useState } from "react";
-import { motion, useInView, useScroll, useTransform } from "framer-motion";
-import { Phone, Mail, Truck, Calendar, Wrench, Handshake } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { motion, useInView, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { Phone, Mail, Truck, Calendar, Wrench, Handshake, ArrowDown } from "lucide-react";
 
 /* ─── Image URLs ─── */
-const HERO_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/98778889/QMnsTj9WZsLEejfW68SYyB/hero-banquet-hall-RRjmKx6LEmLbG9Kc5Qq4PX.webp";
+const HERO_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/98778889/QMnsTj9WZsLEejfW68SYyB/hero-banquet-hall-NRx4UtMG9ogQh6csA6t5BP.png";
 const TABLE_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/98778889/QMnsTj9WZsLEejfW68SYyB/table-setting-closeup-XV7d54fuBnryNyv3XceC5Y.webp";
 const OUTDOOR_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/98778889/QMnsTj9WZsLEejfW68SYyB/outdoor-event-setup-mggBQwsTRvXEXu76m5S32G.webp";
 const EQUIPMENT_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/98778889/QMnsTj9WZsLEejfW68SYyB/catering-equipment-PmL4mydYUZYHmycZyzbkFy.webp";
+const WEDDING_IMG = "https://d2xsxph8kpxj0f.cloudfront.net/98778889/QMnsTj9WZsLEejfW68SYyB/wedding-reception-LKURGs2aHxn3mcdp6wJrfE.webp";
 
 /* ─── Animated Counter ─── */
 function AnimatedCounter({ target, suffix = "", duration = 2000 }: { target: number; suffix?: string; duration?: number }) {
@@ -45,56 +48,72 @@ function AnimatedCounter({ target, suffix = "", duration = 2000 }: { target: num
   );
 }
 
-/* ─── Art Deco Decorative Divider ─── */
-function DecoDivider() {
+/* ─── Rotating words for hero headline ─── */
+const rotatingWords = ["свадьбу", "форум", "банкет", "фестиваль", "гала-ужин"];
+
+function RotatingWord() {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIndex((prev) => (prev + 1) % rotatingWords.length);
+    }, 2800);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
-    <div className="flex items-center justify-center gap-4 py-2">
-      <div className="h-px w-16 sm:w-24 bg-gradient-to-r from-transparent to-gold/60" />
-      <svg width="20" height="20" viewBox="0 0 20 20" className="text-gold/80">
-        <path d="M10 0 L20 10 L10 20 L0 10 Z" fill="none" stroke="currentColor" strokeWidth="1" />
-        <path d="M10 4 L16 10 L10 16 L4 10 Z" fill="currentColor" opacity="0.3" />
-      </svg>
-      <div className="h-px w-16 sm:w-24 bg-gradient-to-l from-transparent to-gold/60" />
-    </div>
+    <span className="inline-block relative h-[1.15em] overflow-hidden align-bottom">
+      <AnimatePresence mode="wait">
+        <motion.span
+          key={rotatingWords[index]}
+          initial={{ y: "100%", opacity: 0 }}
+          animate={{ y: "0%", opacity: 1 }}
+          exit={{ y: "-100%", opacity: 0 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="inline-block text-gold italic font-normal"
+        >
+          {rotatingWords[index]}
+        </motion.span>
+      </AnimatePresence>
+    </span>
   );
 }
 
+/* ─── Mouse-tracking image tilt ─── */
+function useMouse() {
+  const [pos, setPos] = useState({ x: 0.5, y: 0.5 });
+  const handleMove = useCallback((e: MouseEvent) => {
+    setPos({ x: e.clientX / window.innerWidth, y: e.clientY / window.innerHeight });
+  }, []);
+  useEffect(() => {
+    window.addEventListener("mousemove", handleMove);
+    return () => window.removeEventListener("mousemove", handleMove);
+  }, [handleMove]);
+  return pos;
+}
+
 /* ═══════════════════════════════════════════
-   SECTION 1 — HERO
+   SECTION 1 — HERO (REDESIGNED)
+   Split layout, text mask reveal, rotating words
    ═══════════════════════════════════════════ */
 function HeroSection() {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
-  const bgY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
-  const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+  const imgScale = useTransform(scrollYProgress, [0, 1], [1, 1.15]);
+  const contentY = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
+  const mouse = useMouse();
 
   return (
-    <section ref={ref} className="relative h-screen min-h-[600px] max-h-[1100px] overflow-hidden">
-      {/* Parallax Background */}
-      <motion.div className="absolute inset-0" style={{ y: bgY }}>
-        <img
-          src={HERO_IMG}
-          alt="Роскошный банкетный зал с сервировкой"
-          className="w-full h-[130%] object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-navy-dark/70 via-navy/60 to-navy-dark/90" />
-      </motion.div>
-
-      {/* Art Deco corner accents */}
-      <div className="absolute top-6 left-6 w-16 h-16 sm:w-24 sm:h-24 border-t border-l border-gold/30" />
-      <div className="absolute top-6 right-6 w-16 h-16 sm:w-24 sm:h-24 border-t border-r border-gold/30" />
-      <div className="absolute bottom-6 left-6 w-16 h-16 sm:w-24 sm:h-24 border-b border-l border-gold/30" />
-      <div className="absolute bottom-6 right-6 w-16 h-16 sm:w-24 sm:h-24 border-b border-r border-gold/30" />
-
-      {/* Top Nav Bar */}
+    <section ref={ref} className="relative h-screen min-h-[700px] max-h-[1200px] overflow-hidden bg-navy-dark">
+      {/* ── Top Nav ── */}
       <motion.nav
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.2 }}
-        className="absolute top-0 left-0 right-0 z-20 px-6 sm:px-10 py-5 flex items-center justify-between"
+        className="absolute top-0 left-0 right-0 z-30 px-5 sm:px-10 py-5 flex items-center justify-between"
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 border border-gold/50 flex items-center justify-center">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 border border-gold/50 flex items-center justify-center backdrop-blur-sm bg-navy-dark/30">
             <span className="text-gold font-[var(--font-display)] text-lg sm:text-xl font-bold tracking-wider">AR</span>
           </div>
           <div className="hidden sm:block">
@@ -113,95 +132,172 @@ function HeroSection() {
         </div>
       </motion.nav>
 
-      {/* Hero Content */}
-      <motion.div style={{ opacity }} className="relative z-10 h-full flex flex-col items-center justify-center px-6 text-center">
-        {/* Subtitle above */}
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.5 }}
-          className="font-[var(--font-accent)] text-gold/80 text-xs sm:text-sm tracking-[0.35em] uppercase mb-6"
-        >
-          Премиальная аренда для мероприятий
-        </motion.p>
-
-        {/* Main Heading */}
-        <motion.h1
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, delay: 0.7 }}
-          className="font-[var(--font-display)] text-ivory text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] max-w-4xl"
-        >
-          Мероприятие{" "}
-          <span className="italic font-normal text-gold">в любых</span>
-          <br />
-          условиях
-        </motion.h1>
-
-        {/* Deco divider */}
+      {/* ── Main Split Layout ── */}
+      <div className="relative h-full flex flex-col lg:flex-row">
+        
+        {/* LEFT SIDE — Text Content */}
         <motion.div
-          initial={{ opacity: 0, scaleX: 0 }}
-          animate={{ opacity: 1, scaleX: 1 }}
-          transition={{ duration: 1, delay: 1.1 }}
-          className="my-6 sm:my-8"
+          style={{ y: contentY }}
+          className="relative z-20 flex flex-col justify-center px-6 sm:px-10 lg:px-16 pt-24 pb-8 lg:pt-0 lg:pb-0 lg:w-[55%]"
         >
-          <DecoDivider />
-        </motion.div>
+          {/* Vertical deco line on left edge (desktop) */}
+          <motion.div
+            initial={{ scaleY: 0 }}
+            animate={{ scaleY: 1 }}
+            transition={{ duration: 1.2, delay: 0.5 }}
+            className="hidden lg:block absolute left-6 top-[20%] bottom-[20%] w-px bg-gradient-to-b from-transparent via-gold/30 to-transparent origin-top"
+          />
 
-        {/* Subheading */}
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1.3 }}
-          className="font-[var(--font-body)] text-ivory/70 text-base sm:text-lg md:text-xl font-light max-w-2xl leading-relaxed"
-        >
-          Посуда, мебель, оборудование и полное сопровождение
-          <br className="hidden sm:block" />
-          для событий любого масштаба
-        </motion.p>
-
-        {/* CTA Button */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1.6 }}
-          className="mt-8 sm:mt-10"
-        >
-          <a
-            href="#contact"
-            className="group relative inline-flex items-center gap-3 px-8 sm:px-10 py-4 sm:py-5 border border-gold/60 bg-gold/10 hover:bg-gold/20 transition-all duration-500 overflow-hidden"
+          {/* Eyebrow */}
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.7, delay: 0.4 }}
+            className="flex items-center gap-3 mb-6 sm:mb-8"
           >
-            <span className="absolute inset-0 bg-gradient-to-r from-gold/0 via-gold/10 to-gold/0 translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
-            <span className="relative font-[var(--font-accent)] text-gold text-sm sm:text-base tracking-[0.2em] uppercase">
-              Оставить заявку
+            <div className="h-px w-8 sm:w-12 bg-gold/50" />
+            <span className="font-[var(--font-accent)] text-gold/70 text-[10px] sm:text-xs tracking-[0.4em] uppercase">
+              Москва и вся Россия
             </span>
-          </a>
+          </motion.div>
+
+          {/* Main Headline — provocative, with rotating word */}
+          <motion.h1
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, delay: 0.6 }}
+            className="font-[var(--font-display)] text-ivory text-[2.2rem] sm:text-5xl md:text-6xl lg:text-[4.2rem] xl:text-7xl font-bold leading-[1.08] tracking-tight"
+          >
+            Накроем
+            <br />
+            <RotatingWord />
+            <br />
+            <span className="text-ivory/40 font-light text-[0.65em]">на 10 000 гостей</span>
+          </motion.h1>
+
+          {/* Sub-line */}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1.1 }}
+            className="mt-6 sm:mt-8 font-[var(--font-body)] text-ivory/50 text-sm sm:text-base md:text-lg font-light leading-relaxed max-w-md"
+          >
+            Посуда, мебель, шатры, инженерия.
+            <br />
+            Вы говорите «когда» — мы делаем всё остальное.
+          </motion.p>
+
+          {/* CTA Row */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1.4 }}
+            className="mt-8 sm:mt-10 flex flex-wrap items-center gap-4"
+          >
+            {/* Primary CTA */}
+            <a
+              href="#contact"
+              className="group relative inline-flex items-center gap-3 px-7 sm:px-9 py-4 bg-gold text-navy-dark font-[var(--font-accent)] text-sm sm:text-base font-semibold tracking-[0.15em] uppercase overflow-hidden transition-all duration-500 hover:shadow-[0_0_40px_rgba(212,175,55,0.3)]"
+            >
+              <span className="absolute inset-0 bg-gold-light translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
+              <span className="relative z-10">Получить расчёт</span>
+              <ArrowDown size={16} className="relative z-10 -rotate-90 group-hover:translate-x-1 transition-transform duration-300" />
+            </a>
+
+            {/* Secondary — phone */}
+            <a
+              href="tel:+74959993888"
+              className="inline-flex items-center gap-2 px-5 py-4 border border-gold/20 hover:border-gold/50 text-ivory/70 hover:text-gold font-[var(--font-body)] text-sm tracking-wide transition-all duration-400"
+            >
+              <Phone size={15} />
+              <span className="hidden sm:inline">Позвонить</span>
+            </a>
+          </motion.div>
+
+          {/* Floating mini-stats at bottom-left */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1, delay: 2 }}
+            className="mt-auto pt-8 lg:pt-12 flex items-center gap-6 sm:gap-10"
+          >
+            {[
+              { val: "7 000+", label: "чайных пар" },
+              { val: "5+", label: "лет опыта" },
+              { val: "24/7", label: "поддержка" },
+            ].map((s) => (
+              <div key={s.label} className="text-left">
+                <div className="font-[var(--font-display)] text-gold text-lg sm:text-xl font-bold">{s.val}</div>
+                <div className="font-[var(--font-body)] text-ivory/30 text-[10px] sm:text-xs font-light tracking-wide">{s.label}</div>
+              </div>
+            ))}
+          </motion.div>
         </motion.div>
 
-        {/* Trust badge */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 2 }}
-          className="mt-6 font-[var(--font-body)] text-ivory/40 text-xs sm:text-sm tracking-wide"
-        >
-          Опыт работы с событиями до 30 000 гостей
-        </motion.p>
-      </motion.div>
+        {/* RIGHT SIDE — Image with mask & parallax */}
+        <div className="absolute inset-0 lg:relative lg:w-[45%] lg:inset-auto">
+          {/* Image container with diagonal clip on desktop */}
+          <motion.div
+            className="h-full w-full overflow-hidden"
+            style={{
+              clipPath: window.innerWidth >= 1024
+                ? "polygon(12% 0, 100% 0, 100% 100%, 0% 100%)"
+                : "none",
+            }}
+          >
+            <motion.div
+              style={{ scale: imgScale }}
+              className="h-full w-full"
+            >
+              <motion.img
+                src={HERO_IMG}
+                alt="Роскошный банкетный зал AllRent"
+                className="w-full h-full object-cover"
+                style={{
+                  x: `${(mouse.x - 0.5) * -15}px`,
+                  y: `${(mouse.y - 0.5) * -15}px`,
+                }}
+              />
+            </motion.div>
+            {/* Gradient overlays */}
+            <div className="absolute inset-0 bg-gradient-to-r from-navy-dark via-navy-dark/80 to-transparent lg:from-navy-dark lg:via-navy-dark/40 lg:to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-navy-dark via-transparent to-navy-dark/50 lg:from-navy-dark/60 lg:via-transparent lg:to-navy-dark/30" />
+          </motion.div>
 
-      {/* Scroll indicator */}
+          {/* Floating gold frame accent on image (desktop only) */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.5, delay: 1.8 }}
+            className="hidden lg:block absolute top-[15%] right-[10%] w-48 h-64 border border-gold/15 pointer-events-none"
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.5, delay: 2 }}
+            className="hidden lg:block absolute top-[18%] right-[8%] w-48 h-64 border border-gold/10 pointer-events-none"
+          />
+        </div>
+      </div>
+
+      {/* ── Scroll hint ── */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 2.5, duration: 1 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2"
+        className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2"
       >
-        <span className="font-[var(--font-body)] text-ivory/30 text-[10px] tracking-[0.3em] uppercase">Scroll</span>
         <motion.div
-          animate={{ y: [0, 8, 0] }}
+          animate={{ y: [0, 10, 0] }}
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          className="w-px h-8 bg-gradient-to-b from-gold/50 to-transparent"
-        />
+          className="w-6 h-10 border border-gold/30 rounded-full flex items-start justify-center p-1.5"
+        >
+          <motion.div
+            animate={{ y: [0, 12, 0], opacity: [1, 0.3, 1] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className="w-1 h-2 bg-gold/60 rounded-full"
+          />
+        </motion.div>
       </motion.div>
     </section>
   );
@@ -223,14 +319,12 @@ function StatsSection() {
 
   return (
     <section ref={ref} className="relative py-20 sm:py-28 overflow-hidden">
-      {/* Subtle background texture */}
       <div className="absolute inset-0 bg-navy-dark" />
       <div className="absolute inset-0 opacity-[0.03]" style={{
         backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(212,175,55,0.1) 35px, rgba(212,175,55,0.1) 36px)`
       }} />
 
       <div className="relative z-10 container max-w-6xl mx-auto px-4">
-        {/* Section header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -246,7 +340,6 @@ function StatsSection() {
           </h2>
         </motion.div>
 
-        {/* Stats grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
           {stats.map((stat, i) => (
             <motion.div
@@ -256,7 +349,6 @@ function StatsSection() {
               transition={{ duration: 0.7, delay: 0.2 + i * 0.15 }}
               className="group relative text-center p-6 sm:p-8"
             >
-              {/* Deco border that appears on hover */}
               <div className="absolute inset-0 border border-gold/0 group-hover:border-gold/20 transition-all duration-700" />
               <div className="absolute top-0 left-0 w-4 h-4 border-t border-l border-gold/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <div className="absolute bottom-0 right-0 w-4 h-4 border-b border-r border-gold/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
@@ -274,7 +366,6 @@ function StatsSection() {
           ))}
         </div>
 
-        {/* Bottom decorative line */}
         <motion.div
           initial={{ scaleX: 0 }}
           animate={isInView ? { scaleX: 1 } : {}}
@@ -314,7 +405,7 @@ const services = [
     icon: Handshake,
     title: "Комплексные решения",
     description: "Свадьбы, банкеты, форумы, фестивали. Подбор площадки и организация под ключ.",
-    image: HERO_IMG,
+    image: WEDDING_IMG,
   },
 ];
 
@@ -327,7 +418,6 @@ function ServicesSection() {
       <div className="absolute inset-0 bg-navy" />
 
       <div className="relative z-10 container max-w-6xl mx-auto px-4">
-        {/* Section header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -343,7 +433,6 @@ function ServicesSection() {
           </h2>
         </motion.div>
 
-        {/* Services grid — 2x2 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
           {services.map((service, i) => (
             <motion.div
@@ -353,14 +442,11 @@ function ServicesSection() {
               transition={{ duration: 0.7, delay: 0.15 + i * 0.15 }}
               className="group relative overflow-hidden border border-gold/10 hover:border-gold/30 transition-all duration-700 bg-navy-dark/50"
             >
-              {/* Background image that reveals on hover */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-700">
                 <img src={service.image} alt="" className="w-full h-full object-cover" />
               </div>
 
-              {/* Content */}
               <div className="relative z-10 p-8 sm:p-10 flex flex-col gap-4">
-                {/* Number + Icon row */}
                 <div className="flex items-center justify-between">
                   <span className="font-[var(--font-display)] text-gold/20 text-5xl sm:text-6xl font-bold leading-none">
                     0{i + 1}
@@ -368,17 +454,14 @@ function ServicesSection() {
                   <service.icon size={28} className="text-gold/60 group-hover:text-gold transition-colors duration-500" strokeWidth={1.5} />
                 </div>
 
-                {/* Title */}
                 <h3 className="font-[var(--font-display)] text-ivory text-xl sm:text-2xl font-semibold mt-2">
                   {service.title}
                 </h3>
 
-                {/* Description */}
                 <p className="font-[var(--font-body)] text-ivory/50 text-sm sm:text-base font-light leading-relaxed">
                   {service.description}
                 </p>
 
-                {/* Bottom deco line */}
                 <div className="mt-4 h-px w-0 group-hover:w-full bg-gradient-to-r from-gold/40 to-transparent transition-all duration-700" />
               </div>
             </motion.div>
